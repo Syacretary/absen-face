@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .container { max-width: 1000px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; }
+        th { color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
+        tr:hover { background-color: #f8fafc; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions">
+            <div>
+                <h1>Dashboard Admin</h1>
+                <p class="subtitle">Rekapitulasi Kehadiran</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="{{ url_for('admin_config') }}" class="btn" style="width: auto; background-color: #f97316;">
+                    ⚙️ Pengaturan Kelas
+                </a>
+                <a href="{{ url_for('export_csv') }}" class="btn" style="width: auto; background-color: #10b981;">
+                    📥 Download CSV / Excel
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="width: auto;">
+                    🏠 Halaman Utama
+                </a>
+            </div>
+        </div>
+        
+        <div style="overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Nama</th>
+                        <th>Kelas</th>
+                        <th>Aktivitas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visit in visits %}
+                    <tr>
+                        <td style="color: #64748b; font-size: 0.9em;">{{ visit.timestamp }}</td>
+                        <td style="font-weight: 600; color: var(--primary-color);">{{ visit.name }}</td>
+                        <td>
+                            <span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 500;">
+                                {{ visit.class_name }}
+                            </span>
+                             <small style="color: #94a3b8;">#{{ visit.absent_number }}</small>
+                        </td>
+                        <td>
+                            <span style="background: #e0f2f1; color: #00695c; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">
+                                {{ visit.activity }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not visits %}
+        <div style="padding: 40px; text-align: center; color: var(--text-muted);">
+            <p>Belum ada data kunjungan hari ini.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+</body>
+</html>

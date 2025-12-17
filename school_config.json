@@ -1,0 +1,23 @@
+{
+    "grades": [
+        {
+            "label": "X (Sepuluh)",
+            "value": "X",
+            "has_majors": false,
+            "max_rooms": 10
+        },
+        {
+            "label": "XI (Sebelas)",
+            "value": "XI",
+            "has_majors": true,
+            "max_rooms": 4
+        },
+        {
+            "label": "XII (Dua Belas)",
+            "value": "XII",
+            "has_majors": true,
+            "max_rooms": 4
+        }
+    ],
+    "majors": ["MIPA", "IPS", "BAHASA"]
+}

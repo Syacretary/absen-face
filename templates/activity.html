@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pilih Aktivitas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Halo, {{ user_name }}!</h1>
+        <p class="subtitle">Apa yang ingin Anda lakukan hari ini?</p>
+        
+        <!-- Action URL berubah dinamis tergantung status user -->
+        <form action="{{ url_for('activity_new') if is_new else url_for('activity_existing') }}" method="POST">
+            <div class="activity-grid">
+                <button type="submit" name="activity_type" value="Membaca" class="activity-btn">
+                    <span>📚</span> Membaca
+                </button>
+                <button type="submit" name="activity_type" value="Belajar" class="activity-btn">
+                    <span>📝</span> Belajar
+                </button>
+                <button type="submit" name="activity_type" value="Meminjam Buku" class="activity-btn">
+                    <span>📖</span> Pinjam Buku
+                </button>
+                <button type="submit" name="activity_type" value="Mengembalikan Buku" class="activity-btn">
+                    <span>↩️</span> Kembalikan Buku
+                </button>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <label for="custom_activity">Aktivitas Lainnya</label>
+                <input type="text" id="custom_activity" name="custom_activity" class="custom-input" placeholder="Tulis aktivitas...">
+                <button type="submit" name="activity_type" value="other" class="btn" style="margin-top: 10px;">
+                    {{ 'Simpan & Selesai' if is_new else 'Kirim' }}
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+</body>
+</html>

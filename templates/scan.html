@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Wajah</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .scan-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: var(--radius-lg);
+            z-index: 5;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .scan-frame {
+            width: 60%; height: 70%;
+            border: 2px dashed rgba(255,255,255,0.8);
+            border-radius: 200px; /* Oval shape for face */
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); /* Dim background */
+        }
+        .status-pill {
+            position: absolute; bottom: 20px;
+            background: rgba(0,0,0,0.7); color: white;
+            padding: 8px 16px; border-radius: 20px;
+            font-size: 0.9rem; backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 600px;">
+        <h2>Posisikan Wajah</h2>
+        <p class="subtitle">Lihat lurus ke kamera. Sistem akan scan otomatis.</p>
+        
+        <div class="video-wrapper">
+            <video id="webcamFeed" autoplay playsinline muted></video>
+            <div class="scan-overlay">
+                <div class="scan-frame"></div>
+                <div class="status-pill" id="statusText">Menunggu Wajah...</div>
+            </div>
+        </div>
+        
+        <canvas id="canvas" style="display:none;"></canvas>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary" style="width: auto;">Batal</a>
+    </div>
+
+    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+
+    <script>
+        const video = document.getElementById('webcamFeed');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const statusText = document.getElementById('statusText');
+        let isProcessing = false;
+        let scanInterval;
+
+        // 1. Start Camera
+        navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" } })
+            .then(stream => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    // Start auto-scanning loop
+                    scanInterval = setInterval(processFrame, 1200); // Cek setiap 1.2 detik
+                };
+            })
+            .catch(err => {
+                statusText.innerText = "Kamera Error: " + err.name;
+                statusText.style.background = "rgba(239, 68, 68, 0.9)";
+            });
+
+        // 2. Process Frame Function
+        function processFrame() {
+            if (isProcessing) return; // Skip if still busy
+
+            // Draw current frame
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to base64
+            const imageData = canvas.toDataURL('image/jpeg', 0.7); // Compress 0.7 quality
+            
+            isProcessing = true;
+            statusText.innerText = "Memindai...";
+            
+            fetch('/detect_face', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    statusText.innerText = "Berhasil!";
+                    statusText.style.background = "rgba(16, 185, 129, 0.9)";
+                    clearInterval(scanInterval); // Stop scanning
+                    
+                    // Handle specific alert (e.g., cooldown)
+                    if (data.alert) {
+                        alert(data.alert); // Simple alert before redirect
+                    }
+                    window.location.href = data.redirect_url;
+                } else if (data.status === 'retry') {
+                    // Feedback to user (e.g. "Look Straight", "No Face")
+                    statusText.innerText = data.message;
+                    isProcessing = false; // Allow next frame
+                } else {
+                    // Critical Error
+                    statusText.innerText = "Error Sistem";
+                    isProcessing = false;
+                }
+            })
+            .catch(e => {
+                console.error(e);
+                isProcessing = false;
+            });
+        }
+    </script>
+</body>
+</html>

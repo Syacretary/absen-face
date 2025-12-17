@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Konfigurasi Kelas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .container { max-width: 800px; }
+        .config-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px; }
+        .config-section h3 { margin-top: 0; color: var(--primary-color); }
+        .grade-item { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px; }
+        .grade-item:last-child { border-bottom: none; }
+        .grade-item label { flex-basis: 100px; font-weight: 600; }
+        .grade-item input[type="text"], .grade-item input[type="number"] { width: 80px; }
+        .grade-item input[type="checkbox"] { width: auto; margin-left: 5px; }
+        .major-list-input { width: 100%; height: 80px; resize: vertical; }
+        .config-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div id="toast-container"></div>
+    
+    <!-- Tampilkan Flash Message -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const container = document.getElementById('toast-container');
+                    {% for category, message in messages %}
+                        const toast = document.createElement('div');
+                        toast.className = 'toast {{ category }}';
+                        toast.innerText = "{{ message }}";
+                        container.appendChild(toast);
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
+
+    <div class="container">
+        <h1>Admin Konfigurasi Kelas</h1>
+        <p class="subtitle">Atur format penulisan kelas dan jurusan yang akan digunakan di halaman pendaftaran.</p>
+        
+        <form action="{{ url_for('admin_config') }}" method="POST">
+            <div class="config-section">
+                <h3>Pengaturan Tingkat Kelas</h3>
+                {% for grade in config.grades %}
+                <div class="grade-item">
+                    <label>Tingkat {{ grade.value }} ({{ grade.label.split(' ')[0] }})</label>
+                    <input type="hidden" name="grade_{{ loop.index0 }}_value" value="{{ grade.value }}">
+                    <input type="hidden" name="grade_{{ loop.index0 }}_label" value="{{ grade.label }}">
+
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="has_majors_{{ loop.index0 }}" name="grade_{{ loop.index0 }}_has_majors" value="true" {% if grade.has_majors %}checked{% endif %}>
+                        <label for="has_majors_{{ loop.index0 }}" style="margin-bottom: 0; margin-left: 5px; flex-basis: auto;">Ada Jurusan</label>
+                    </div>
+
+                    <label for="max_rooms_{{ loop.index0 }}">Max Ruang:</label>
+                    <input type="number" id="max_rooms_{{ loop.index0 }}" name="grade_{{ loop.index0 }}_max_rooms" class="custom-input" value="{{ grade.max_rooms }}" min="1" required>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="config-section">
+                <h3>Daftar Jurusan</h3>
+                <p class="subtitle" style="margin-bottom: 10px;">Pisahkan dengan koma (contoh: MIPA, IPS, BAHASA)</p>
+                <textarea name="majors_list" class="custom-input major-list-input">{{ ', '.join(config.majors) }}</textarea>
+            </div>
+            
+            <div class="config-actions">
+                <a href="{{ url_for('admin') }}" class="btn btn-secondary">Kembali ke Admin</a>
+                <button type="submit" class="btn" style="background-color: var(--success);">Simpan Konfigurasi</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+</body>
+</html>

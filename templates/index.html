@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hadir Otomatis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="toast-container"></div>
+    
+    <!-- Flash Messages (jika ada, misal user sudah absen) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const container = document.getElementById('toast-container');
+                    {% for category, message in messages %}
+                        const toast = document.createElement('div');
+                        toast.className = 'toast {{ category }}';
+                        toast.innerText = "{{ message }}";
+                        container.appendChild(toast);
+                        setTimeout(() => toast.remove(), 4000);
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
+
+    <div class="container" style="padding: 60px 40px;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">📚</div>
+        <h1>Selamat Datang</h1>
+        <p class="subtitle">Perpustakaan Digital Sekolah</p>
+        
+        <a href="{{ url_for('scan_page') }}" class="btn" style="font-size: 1.2rem; padding: 18px 30px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            Mulai Check-In
+        </a>
+        <p style="margin-top: 20px; font-size: 0.85rem; color: #94a3b8;">Klik untuk menyalakan kamera & scan wajah</p>
+    </div>
+
+    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+</body>
+</html>

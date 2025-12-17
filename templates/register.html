@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendaftaran Anggota Baru</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="toast-container"></div>
+    
+    <!-- Flash Messages from Backend -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    {% for category, message in messages %}
+                        showToast("{{ message }}", "{{ category }}");
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
+
+    <div class="container">
+        <h1>Pendaftaran Baru</h1>
+        <p class="subtitle">Wajah Anda belum terdaftar. Silakan lengkapi data diri.</p>
+        
+        <form action="{{ url_for('register') }}" method="POST" id="regForm" novalidate>
+            
+            <div class="form-group">
+                <label for="name">Nama Lengkap (Sesuai Raport)</label>
+                <input type="text" id="name" name="name" class="custom-input" placeholder="Contoh: BUDI SANTOSO" style="text-transform: uppercase;" required>
+                <div class="input-error-msg">Nama wajib diisi.</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="grade">Tingkat Kelas</label>
+                <select id="grade" name="grade" class="custom-input" required>
+                    <option value="" disabled selected>Pilih Tingkat</option>
+                    {% for g in config.grades %}
+                        <option value="{{ g.value }}" data-majors="{{ 'true' if g.has_majors else 'false' }}" data-rooms="{{ g.max_rooms }}">{{ g.label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="input-error-msg">Tingkat kelas wajib dipilih.</div>
+            </div>
+
+            <div class="form-group" id="major-group" style="display: none;">
+                <label for="major">Jurusan</label>
+                <select id="major" name="major" class="custom-input">
+                    <option value="" disabled selected>Pilih Jurusan</option>
+                    {% for m in config.majors %}
+                        <option value="{{ m }}">{{ m }}</option>
+                    {% endfor %}
+                </select>
+                <div class="input-error-msg">Jurusan wajib dipilih.</div>
+            </div>
+
+            <div class="form-group" id="room-group" style="display: none;">
+                <label for="room">Nomor Ruangan</label>
+                <select id="room" name="room" class="custom-input" required>
+                    <!-- Populated by JS -->
+                </select>
+                <div class="input-error-msg">Nomor ruangan wajib dipilih.</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="absent_number">Nomor Absen</label>
+                <input type="number" id="absent_number" name="absent_number" class="custom-input" placeholder="1 - 40" min="1" max="40" required>
+                <div class="input-error-msg">Nomor absen wajib diisi.</div>
+            </div>
+            
+            <button type="submit" class="btn">Lanjut ke Aktivitas</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Batal</a>
+        </form>
+    </div>
+
+    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+
+    <script>
+        // Toast Helper
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        const gradeSelect = document.getElementById('grade');
+        const majorGroup = document.getElementById('major-group');
+        const majorSelect = document.getElementById('major');
+        const roomGroup = document.getElementById('room-group');
+        const roomSelect = document.getElementById('room');
+        const form = document.getElementById('regForm');
+
+        // Logic Kelas Bertingkat
+        gradeSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const hasMajors = selectedOption.getAttribute('data-majors') === 'true';
+            const maxRooms = parseInt(selectedOption.getAttribute('data-rooms'));
+
+            roomSelect.innerHTML = '<option value="" disabled selected>Pilih Ruang</option>';
+            for(let i=1; i<=maxRooms; i++) {
+                let opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = i;
+                roomSelect.appendChild(opt);
+            }
+            roomGroup.style.display = 'block';
+
+            if (hasMajors) {
+                majorGroup.style.display = 'block';
+                majorSelect.setAttribute('required', 'required');
+            } else {
+                majorGroup.style.display = 'none';
+                majorSelect.removeAttribute('required');
+                majorSelect.value = "";
+            }
+        });
+
+        // VALIDASI CUSTOM INTERAKTIF
+        form.addEventListener('submit', (e) => {
+            let isValid = true;
+            // Ambil semua input yang visible dan required
+            const visibleInputs = Array.from(form.querySelectorAll('input, select')).filter(input => {
+                return input.hasAttribute('required') && input.offsetParent !== null; 
+            });
+
+            visibleInputs.forEach(input => {
+                const errorMsg = input.parentElement.querySelector('.input-error-msg');
+                if (!input.value.trim()) {
+                    input.classList.add('error');
+                    if(errorMsg) errorMsg.style.display = 'flex';
+                    isValid = false;
+                } else {
+                    input.classList.remove('error');
+                    if(errorMsg) errorMsg.style.display = 'none';
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault(); // Stop submit
+                showToast("Harap lengkapi semua data yang bertanda merah!", "error");
+                
+                // Shake animation reset
+                const firstError = form.querySelector('.error');
+                if(firstError) {
+                    firstError.focus();
+                }
+            }
+        });
+
+        // Hapus error saat user mengetik/memilih
+        form.querySelectorAll('input, select').forEach(input => {
+            input.addEventListener('input', () => {
+                input.classList.remove('error');
+                const errorMsg = input.parentElement.querySelector('.input-error-msg');
+                if(errorMsg) errorMsg.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
