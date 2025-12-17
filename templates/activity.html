@@ -7,31 +7,36 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div id="toast-container"></div>
+    
     <div class="container">
         <h1>Halo, {{ user_name }}!</h1>
         <p class="subtitle">Apa yang ingin Anda lakukan hari ini?</p>
         
-        <!-- Action URL berubah dinamis tergantung status user -->
-        <form action="{{ url_for('activity_new') if is_new else url_for('activity_existing') }}" method="POST">
+        <form action="{{ url_for('activity_new') if is_new else url_for('activity_existing') }}" method="POST" id="activityForm">
             <div class="activity-grid">
-                <button type="submit" name="activity_type" value="Membaca" class="activity-btn">
+                <!-- Tambahkan type="button" agar tidak auto-submit, kita handle via JS -->
+                <button type="button" class="activity-btn" data-value="Membaca">
                     <span>📚</span> Membaca
                 </button>
-                <button type="submit" name="activity_type" value="Belajar" class="activity-btn">
+                <button type="button" class="activity-btn" data-value="Belajar">
                     <span>📝</span> Belajar
                 </button>
-                <button type="submit" name="activity_type" value="Meminjam Buku" class="activity-btn">
+                <button type="button" class="activity-btn" data-value="Meminjam Buku">
                     <span>📖</span> Pinjam Buku
                 </button>
-                <button type="submit" name="activity_type" value="Mengembalikan Buku" class="activity-btn">
+                <button type="button" class="activity-btn" data-value="Mengembalikan Buku">
                     <span>↩️</span> Kembalikan Buku
                 </button>
             </div>
 
+            <!-- Hidden Input untuk menyimpan nilai tombol -->
+            <input type="hidden" name="activity_type" id="selected_activity">
+
             <div class="form-group" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
                 <label for="custom_activity">Aktivitas Lainnya</label>
                 <input type="text" id="custom_activity" name="custom_activity" class="custom-input" placeholder="Tulis aktivitas...">
-                <button type="submit" name="activity_type" value="other" class="btn" style="margin-top: 10px;">
+                <button type="submit" id="submitCustom" class="btn" style="margin-top: 10px;">
                     {{ 'Simpan & Selesai' if is_new else 'Kirim' }}
                 </button>
             </div>
@@ -39,5 +44,56 @@
     </div>
     
     <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+
+    <script>
+        // Toast Helper
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        const form = document.getElementById('activityForm');
+        const hiddenInput = document.getElementById('selected_activity');
+        const customInput = document.getElementById('custom_activity');
+        const activityBtns = document.querySelectorAll('.activity-btn');
+        const submitCustomBtn = document.getElementById('submitCustom');
+
+        // Logic Tombol Aktivitas
+        activityBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const value = btn.getAttribute('data-value');
+                hiddenInput.value = value;
+                form.submit(); // Langsung kirim jika klik tombol besar
+            });
+        });
+
+        // Logic Validasi Custom Input
+        submitCustomBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Stop default submit
+            
+            // Cek apakah custom input diisi
+            if (customInput.value.trim() !== "") {
+                hiddenInput.value = "other"; // Set tipe ke 'other'
+                form.submit();
+            } else {
+                // Jika kosong, tampilkan error
+                customInput.classList.add('error');
+                showToast("Harap pilih aktivitas atau tulis aktivitas lainnya.", "error");
+                customInput.focus();
+            }
+        });
+
+        // Remove error on type
+        customInput.addEventListener('input', () => {
+            customInput.classList.remove('error');
+        });
+    </script>
 </body>
 </html>

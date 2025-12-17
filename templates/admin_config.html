@@ -68,6 +68,16 @@
                 <textarea name="majors_list" class="custom-input major-list-input">{{ ', '.join(config.majors) }}</textarea>
             </div>
             
+            <div class="config-section" style="border-color: #fca5a5; background-color: #fef2f2;">
+                <h3 style="color: var(--danger);">⚠️ Zona Bahaya</h3>
+                <p class="subtitle" style="margin-bottom: 15px;">Tindakan ini akan menghapus <strong>SEMUA DATA</strong> (Data Siswa, Wajah, dan Riwayat Absensi). Tindakan ini tidak dapat dibatalkan.</p>
+                <div style="text-align: right;">
+                    <button type="button" onclick="confirmReset()" class="btn" style="background-color: var(--danger); width: auto;">
+                        🗑️ Hapus Semua Data
+                    </button>
+                </div>
+            </div>
+
             <div class="config-actions">
                 <a href="{{ url_for('admin') }}" class="btn btn-secondary">Kembali ke Admin</a>
                 <button type="submit" class="btn" style="background-color: var(--success);">Simpan Konfigurasi</button>
@@ -75,6 +85,20 @@
         </form>
     </div>
 
-    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+    <!-- Hidden Form for Reset -->
+    <form id="resetForm" action="{{ url_for('reset_data') }}" method="POST" style="display: none;"></form>
+
+    <script>
+        function confirmReset() {
+            const confirmed = confirm("APAKAH ANDA YAKIN?\n\nSemua data wajah siswa dan riwayat kehadiran akan dihapus PERMANEN.\nPastikan Anda sudah melakukan Export data jika perlu.");
+            if (confirmed) {
+                // Double confirmation untuk keamanan
+                const doubleCheck = confirm("Sekali lagi: Data akan hilang selamanya. Lanjutkan?");
+                if (doubleCheck) {
+                    document.getElementById('resetForm').submit();
+                }
+            }
+        }
+    </script>
 </body>
 </html>

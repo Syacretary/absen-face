@@ -7,7 +7,7 @@ import csv
 import io
 from io import BytesIO
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, session, make_response
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, session, make_response, send_from_directory
 import face_recognition
 import numpy as np
 from PIL import Image
@@ -19,6 +19,8 @@ from database import User, Visit, engine, init_db
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'kuncirahasia_super_aman' 
+
+# Hapus os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True) karena tidak menyimpan file lagi
 
 init_db()
 Session = sessionmaker(bind=engine)
@@ -32,7 +34,6 @@ def load_school_config():
         with open(CONFIG_FILE_PATH, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        # Default config if file not found
         return {
             "grades": [
                 {"label": "X (Sepuluh)", "value": "X", "has_majors": False, "max_rooms": 10},
@@ -75,11 +76,17 @@ def get_face_encodings_from_image(image_data_url):
 
 # --- Routes ---
 
+# Hapus route /uploads/<filename>
+# @app.route('/uploads/<filename>')
+# def uploaded_file(filename):
+#     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 @app.route('/')
 def index():
     session.pop('temp_face', None)
     session.pop('temp_user_data', None)
     session.pop('temp_user_id', None)
+    session.pop('temp_image_data', None) # Hapus ini
     return render_template('index.html')
 
 @app.route('/scan')
@@ -113,7 +120,9 @@ def detect_face():
                 session['temp_user_id'] = user.id
                 return jsonify({"status": "success", "redirect_url": url_for('activity_existing')})
 
+        # Wajah Baru: Simpan Encoding saja ke Session
         session['temp_face'] = current_encoding.tolist()
+        # Hapus baris session['temp_image_data'] = image_data_url
         return jsonify({"status": "success", "redirect_url": url_for('register')})
 
     except Exception as e: return jsonify({"status": "error", "message": "Server Error"})
@@ -167,6 +176,7 @@ def register():
 def activity_new():
     if 'temp_face' not in session or 'temp_user_data' not in session: return redirect(url_for('index'))
     user_data = session['temp_user_data']
+    
     if request.method == 'POST':
         db_session = Session()
         try:
@@ -179,15 +189,41 @@ def activity_new():
                 return redirect(url_for('index'))
 
             face_encoding_bytes = np.array(session['temp_face']).tobytes()
-            new_user = User(name=user_data['name'], class_name=user_data['class_name'], absent_number=user_data['absent_number'], face_encoding=face_encoding_bytes)
+            
+            # --- Hapus PROSES SIMPAN GAMBAR ---
+            # image_filename = None
+            # if 'temp_image_data' in session:
+            #     image_data = session['temp_image_data']
+            #     base64_data = re.sub('^data:image/.+;base64,', '', image_data)
+            #     binary_data = base64.b64decode(base64_data)
+            #     safe_name = "".join([c for c in user_data['name'] if c.isalnum()])
+            #     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            #     image_filename = f"{safe_name}_{timestamp}.jpg"
+            #     file_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+            #     with open(file_path, "wb") as f:
+            #         f.write(binary_data)
+            # -----------------------------------
+
+            new_user = User(
+                name=user_data['name'], 
+                class_name=user_data['class_name'], 
+                absent_number=user_data['absent_number'], 
+                face_encoding=face_encoding_bytes,
+                # Hapus image_path=image_filename
+            )
+            
             db_session.add(new_user)
             db_session.flush()
             new_visit = Visit(user_id=new_user.id, activity=activity_type)
             db_session.add(new_visit)
             db_session.commit()
+            
             flash(f"Selamat Datang, {new_user.name}!", "success")
             return redirect(url_for('index'))
-        except Exception: db_session.rollback(); return redirect(url_for('index'))
+        except Exception as e: 
+            print(e)
+            db_session.rollback()
+            return redirect(url_for('index'))
         finally: db_session.close()
     return render_template('activity.html', user_name=user_data['name'], is_new=True)
 
@@ -218,7 +254,14 @@ def admin():
     visit_data = []
     for visit in visits:
         user = db_session.query(User).get(visit.user_id)
-        visit_data.append({'name': user.name if user else 'Unknown', 'class_name': user.class_name if user else '-', 'absent_number': user.absent_number if user else '-', 'activity': visit.activity, 'timestamp': visit.timestamp.strftime('%H:%M - %d/%m/%Y')})
+        visit_data.append({
+            'name': user.name if user else 'Unknown', 
+            'class_name': user.class_name if user else '-', 
+            'absent_number': user.absent_number if user else '-', 
+            'activity': visit.activity, 
+            'timestamp': visit.timestamp.strftime('%H:%M - %d/%m/%Y'),
+            # Hapus 'image_path': user.image_path if user else None
+        })
     db_session.close()
     return render_template('admin.html', visits=visit_data)
 
@@ -256,6 +299,33 @@ def admin_config():
 
     return render_template('admin_config.html', config=config)
 
+@app.route('/admin/reset_data', methods=['POST'])
+def reset_data():
+    db_session = Session()
+    try:
+        db_session.query(Visit).delete()
+        db_session.query(User).delete()
+        db_session.commit()
+        session.clear()
+        
+        # Hapus juga logika penghapusan file gambar fisik
+        # folder = app.config['UPLOAD_FOLDER']
+        # for filename in os.listdir(folder):
+        #     file_path = os.path.join(folder, filename)
+        #     try:
+        #         if os.path.isfile(file_path):
+        #             os.unlink(file_path)
+        #     except Exception as e:
+        #         print(f"Error deleting file: {e}")
+
+        flash("Sistem berhasil di-reset. Semua data telah dihapus.", "success")
+        return redirect(url_for('admin_config'))
+    except Exception as e:
+        db_session.rollback()
+        flash(f"Gagal mereset data: {e}", "error")
+        return redirect(url_for('admin_config'))
+    finally:
+        db_session.close()
 
 @app.route('/admin/export/csv')
 def export_csv():

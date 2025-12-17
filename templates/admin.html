@@ -12,6 +12,14 @@
         th { color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
         tr:hover { background-color: #f8fafc; }
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        /* Hapus styling untuk user-thumb */
+        /* .user-thumb {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e2e8f0;
+        } */
     </style>
 </head>
 <body>
@@ -39,6 +47,8 @@
                 <thead>
                     <tr>
                         <th>Waktu</th>
+                        <!-- Hapus Kolom Foto -->
+                        <!-- <th style="width: 50px;">Foto</th> -->
                         <th>Nama</th>
                         <th>Kelas</th>
                         <th>Aktivitas</th>
@@ -48,6 +58,16 @@
                     {% for visit in visits %}
                     <tr>
                         <td style="color: #64748b; font-size: 0.9em;">{{ visit.timestamp }}</td>
+                        
+                        <!-- Hapus Tampilan Thumbnail -->
+                        <!-- <td>
+                            {% if visit.image_path %}
+                                <img src="{{ url_for('uploaded_file', filename=visit.image_path) }}" class="user-thumb" alt="Foto">
+                            {% else %}
+                                <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.7em;">No Img</div>
+                            {% endif %}
+                        </td> -->
+
                         <td style="font-weight: 600; color: var(--primary-color);">{{ visit.name }}</td>
                         <td>
                             <span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 500;">

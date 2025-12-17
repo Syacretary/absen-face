@@ -31,34 +31,57 @@
     -webkit-font-smoothing: antialiased; /* Smooth fonts on Mac */
 }
 
+/* Global Layout Fix */
 body {
-    background-color: #f1f5f9;
-    color: var(--text-main);
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    align-items: center; /* Center horizontally */
     min-height: 100vh;
+    margin: 0;
     padding: 20px;
-    /* Subtle Abstract Background */
+    background-color: #f1f5f9;
+    /* Background abstract */
     background-image: 
         radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(249, 115, 22, 0.05) 0px, transparent 50%);
     background-attachment: fixed;
+    /* Ensure content stacks vertically */
 }
 
-/* Responsive Container */
+/* Main Container */
 .container {
+    /* Hapus flex-grow agar tidak stretch */
+    flex: 0 0 auto; 
+    width: 100%;
+    /* margin: auto akan menengahkan container secara vertikal & horizontal
+       di sisa ruang flex parent (body) */
+    margin: auto; 
+    
     background-color: var(--surface-bg);
     padding: 40px;
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-soft);
-    width: 100%;
-    max-width: 480px; /* Optimal reading width for mobile/desktop overlap */
+    max-width: 480px;
     text-align: center;
     position: relative;
     overflow: hidden;
-    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1); /* Smooth spring-like animation */
-    transition: max-width 0.3s ease;
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Footer Styling - Force Bottom */
+.app-footer {
+    flex-shrink: 0; /* Prevent shrinking */
+    width: 100%;
+    text-align: center;
+    padding: 15px 0;
+    margin-top: auto; /* Push to bottom if container is small */
+    
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+    font-family: 'Inter', monospace;
+    letter-spacing: 0.05em;
+    z-index: 10;
 }
 
 /* Wider container for Admin/Tables */
@@ -331,11 +354,13 @@ tr:hover td { background-color: #f8fafc; }
     }
     
 
-/* Validation Styling */
-.custom-input.error {
-    border-color: var(--danger);
-    background-color: #fef2f2; /* Light red bg */
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+/* Validation Styling - High Specificity */
+input.custom-input.error,
+select.custom-input.error,
+textarea.custom-input.error {
+    border: 2px solid var(--danger) !important; /* Force red border */
+    background-color: #fef2f2 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
     animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }
 
@@ -359,17 +384,5 @@ tr:hover td { background-color: #f8fafc; }
     20%, 80% { transform: translate3d(2px, 0, 0); }
     30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
 
-/* Footer Styling */
-.app-footer {
-    position: fixed;
-    bottom: 10px;
-    width: 100%;
-    text-align: center;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    opacity: 0.6;
-    pointer-events: none; /* Agar tidak menghalangi klik */
-    font-family: 'Inter', monospace;
-    letter-spacing: 0.05em;
-    z-index: 0; /* Di belakang elemen pop-up */
-}
+
+
