@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
     <style>
         .container { max-width: 1000px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
@@ -12,17 +12,14 @@
         th { color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
         tr:hover { background-color: #f8fafc; }
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        
-        /* Hapus styling untuk user-thumb */
-        /* .user-thumb {
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #e2e8f0;
-        } */
     </style>
 </head>
 <body>
+    <!-- Logo Sekolah -->
+    <a href="https://sman11sby.com" class="school-logo" target="_blank">
+        <img src="{{ url_for('static', filename='img/logo-sekolah.png') }}" alt="SMAN 11 SURABAYA" onerror="this.style.display='none'; this.parentElement.innerText='SMAN 11 SURABAYA'; this.parentElement.style.color='#0f766e'; this.parentElement.style.fontWeight='bold';">
+    </a>
+
     <div class="container">
         <div class="header-actions">
             <div>
@@ -47,8 +44,7 @@
                 <thead>
                     <tr>
                         <th>Waktu</th>
-                        <!-- Hapus Kolom Foto -->
-                        <!-- <th style="width: 50px;">Foto</th> -->
+                        <th>NIS</th> <!-- Kolom Baru -->
                         <th>Nama</th>
                         <th>Kelas</th>
                         <th>Aktivitas</th>
@@ -58,16 +54,7 @@
                     {% for visit in visits %}
                     <tr>
                         <td style="color: #64748b; font-size: 0.9em;">{{ visit.timestamp }}</td>
-                        
-                        <!-- Hapus Tampilan Thumbnail -->
-                        <!-- <td>
-                            {% if visit.image_path %}
-                                <img src="{{ url_for('uploaded_file', filename=visit.image_path) }}" class="user-thumb" alt="Foto">
-                            {% else %}
-                                <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.7em;">No Img</div>
-                            {% endif %}
-                        </td> -->
-
+                        <td style="font-family: monospace; font-weight: bold; color: #475569;">{{ visit.nis }}</td> <!-- Data NIS -->
                         <td style="font-weight: 600; color: var(--primary-color);">{{ visit.name }}</td>
                         <td>
                             <span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 500;">
@@ -93,6 +80,6 @@
         {% endif %}
     </div>
 
-    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+    <div class="app-footer">Developed by <a href="https://instagram.com/syacretary" target="_blank">Syacretary</a> - XI 3.2</div>
 </body>
 </html>

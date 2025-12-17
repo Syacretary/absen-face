@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pilih Aktivitas</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
 </head>
 <body>
+    <!-- Logo Sekolah -->
+    <a href="https://sman11sby.com" class="school-logo" target="_blank">
+        <img src="{{ url_for('static', filename='img/logo-sekolah.png') }}" alt="SMAN 11 SURABAYA" onerror="this.style.display='none'; this.parentElement.innerText='SMAN 11 SURABAYA'; this.parentElement.style.color='#0f766e'; this.parentElement.style.fontWeight='bold';">
+    </a>
+
     <div id="toast-container"></div>
     
     <div class="container">
@@ -35,7 +40,7 @@
 
             <div class="form-group" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
                 <label for="custom_activity">Aktivitas Lainnya</label>
-                <input type="text" id="custom_activity" name="custom_activity" class="custom-input" placeholder="Tulis aktivitas...">
+                <input type="text" id="custom_activity" name="custom_activity" class="custom-input" placeholder="Tulis aktivitas..." autocomplete="off">
                 <button type="submit" id="submitCustom" class="btn" style="margin-top: 10px;">
                     {{ 'Simpan & Selesai' if is_new else 'Kirim' }}
                 </button>
@@ -43,7 +48,7 @@
         </form>
     </div>
     
-    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+    <div class="app-footer">Developed by <a href="https://instagram.com/syacretary" target="_blank">Syacretary</a> - XI 3.2</div>
 
     <script>
         // Toast Helper

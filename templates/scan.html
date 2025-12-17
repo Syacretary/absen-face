@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scan Wajah</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
     <style>
         .scan-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -29,6 +29,11 @@
     </style>
 </head>
 <body>
+    <!-- Logo Sekolah -->
+    <a href="https://sman11sby.com" class="school-logo" target="_blank">
+        <img src="{{ url_for('static', filename='img/logo-sekolah.png') }}" alt="SMAN 11 SURABAYA" onerror="this.style.display='none'; this.parentElement.innerText='SMAN 11 SURABAYA'; this.parentElement.style.color='#0f766e'; this.parentElement.style.fontWeight='bold';">
+    </a>
+
     <div id="toast-container"></div> <!-- Container Toast -->
 
     <div class="container" style="max-width: 600px;">
@@ -47,7 +52,7 @@
         <a href="{{ url_for('index') }}" class="btn btn-secondary" style="width: auto;">Batal</a>
     </div>
 
-    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+    <div class="app-footer">Developed by <a href="https://instagram.com/syacretary" target="_blank">Syacretary</a> - XI 3.2</div>
 
     <script>
         const video = document.getElementById('webcamFeed');

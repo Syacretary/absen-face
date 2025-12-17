@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hadir Otomatis</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Logo Sekolah -->
+    <a href="https://sman11sby.com" class="school-logo" target="_blank">
+        <img src="{{ url_for('static', filename='img/logo-sekolah.png') }}" alt="SMAN 11 SURABAYA" onerror="this.style.display='none'; this.parentElement.innerText='SMAN 11 SURABAYA'; this.parentElement.style.color='#0f766e'; this.parentElement.style.fontWeight='bold';">
+    </a>
+
     <div id="toast-container"></div>
     
     <!-- Flash Messages (jika ada, misal user sudah absen) -->
@@ -40,6 +45,6 @@
         <p style="margin-top: 20px; font-size: 0.85rem; color: #94a3b8;">Klik untuk menyalakan kamera & scan wajah</p>
     </div>
 
-    <div class="app-footer">Developed by Syacretary - XI 3.2</div>
+    <div class="app-footer">Developed by <a href="https://instagram.com/syacretary" target="_blank">Syacretary</a> - XI 3.2</div>
 </body>
 </html>

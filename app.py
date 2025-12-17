@@ -20,8 +20,6 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'kuncirahasia_super_aman' 
 
-# Hapus os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True) karena tidak menyimpan file lagi
-
 init_db()
 Session = sessionmaker(bind=engine)
 
@@ -76,17 +74,11 @@ def get_face_encodings_from_image(image_data_url):
 
 # --- Routes ---
 
-# Hapus route /uploads/<filename>
-# @app.route('/uploads/<filename>')
-# def uploaded_file(filename):
-#     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
 @app.route('/')
 def index():
     session.pop('temp_face', None)
     session.pop('temp_user_data', None)
     session.pop('temp_user_id', None)
-    session.pop('temp_image_data', None) # Hapus ini
     return render_template('index.html')
 
 @app.route('/scan')
@@ -120,9 +112,7 @@ def detect_face():
                 session['temp_user_id'] = user.id
                 return jsonify({"status": "success", "redirect_url": url_for('activity_existing')})
 
-        # Wajah Baru: Simpan Encoding saja ke Session
         session['temp_face'] = current_encoding.tolist()
-        # Hapus baris session['temp_image_data'] = image_data_url
         return jsonify({"status": "success", "redirect_url": url_for('register')})
 
     except Exception as e: return jsonify({"status": "error", "message": "Server Error"})
@@ -135,6 +125,7 @@ def register():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
+        nis = request.form['nis'].strip() # AMBIL DATA NIS
         name = request.form['name'].strip().upper()
         grade_val = request.form['grade']
         absent_number = request.form['absent_number']
@@ -150,19 +141,20 @@ def register():
             full_class_name = f"{grade_val}-{room}"
 
         db_session = Session()
-        existing_user = db_session.query(User).filter_by(
-            name=name, 
-            class_name=full_class_name, 
-            absent_number=absent_number
+        # Cek duplikat berdasarkan NIS juga sekarang
+        existing_user = db_session.query(User).filter(
+            (User.nis == nis) | 
+            ((User.name == name) & (User.class_name == full_class_name))
         ).first()
         db_session.close()
 
         if existing_user:
-            flash(f"Gagal! Identitas '{name} ({full_class_name} No.{absent_number})' sudah terdaftar dengan wajah lain.", "error")
+            flash(f"Gagal! NIS '{nis}' atau Nama tersebut sudah terdaftar.", "error")
             config = load_school_config()
             return render_template('register.html', config=config)
 
         session['temp_user_data'] = {
+            'nis': nis,
             'name': name,
             'class_name': full_class_name,
             'absent_number': absent_number
@@ -183,33 +175,19 @@ def activity_new():
             activity_type = request.form['activity_type']
             if activity_type == 'other': activity_type = request.form['custom_activity']
             
-            exists = db_session.query(User).filter_by(name=user_data['name'], class_name=user_data['class_name']).first()
+            exists = db_session.query(User).filter_by(nis=user_data['nis']).first()
             if exists:
-                flash("Identitas sudah terdaftar.", "error")
+                flash("NIS sudah terdaftar.", "error")
                 return redirect(url_for('index'))
 
             face_encoding_bytes = np.array(session['temp_face']).tobytes()
             
-            # --- Hapus PROSES SIMPAN GAMBAR ---
-            # image_filename = None
-            # if 'temp_image_data' in session:
-            #     image_data = session['temp_image_data']
-            #     base64_data = re.sub('^data:image/.+;base64,', '', image_data)
-            #     binary_data = base64.b64decode(base64_data)
-            #     safe_name = "".join([c for c in user_data['name'] if c.isalnum()])
-            #     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            #     image_filename = f"{safe_name}_{timestamp}.jpg"
-            #     file_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-            #     with open(file_path, "wb") as f:
-            #         f.write(binary_data)
-            # -----------------------------------
-
             new_user = User(
+                nis=user_data['nis'],
                 name=user_data['name'], 
                 class_name=user_data['class_name'], 
                 absent_number=user_data['absent_number'], 
-                face_encoding=face_encoding_bytes,
-                # Hapus image_path=image_filename
+                face_encoding=face_encoding_bytes
             )
             
             db_session.add(new_user)
@@ -255,12 +233,12 @@ def admin():
     for visit in visits:
         user = db_session.query(User).get(visit.user_id)
         visit_data.append({
+            'nis': user.nis if user else 'Unknown',
             'name': user.name if user else 'Unknown', 
             'class_name': user.class_name if user else '-', 
             'absent_number': user.absent_number if user else '-', 
             'activity': visit.activity, 
             'timestamp': visit.timestamp.strftime('%H:%M - %d/%m/%Y'),
-            # Hapus 'image_path': user.image_path if user else None
         })
     db_session.close()
     return render_template('admin.html', visits=visit_data)
@@ -308,16 +286,6 @@ def reset_data():
         db_session.commit()
         session.clear()
         
-        # Hapus juga logika penghapusan file gambar fisik
-        # folder = app.config['UPLOAD_FOLDER']
-        # for filename in os.listdir(folder):
-        #     file_path = os.path.join(folder, filename)
-        #     try:
-        #         if os.path.isfile(file_path):
-        #             os.unlink(file_path)
-        #     except Exception as e:
-        #         print(f"Error deleting file: {e}")
-
         flash("Sistem berhasil di-reset. Semua data telah dihapus.", "success")
         return redirect(url_for('admin_config'))
     except Exception as e:
@@ -334,12 +302,13 @@ def export_csv():
     
     si = io.StringIO()
     cw = csv.writer(si)
-    cw.writerow(['Timestamp', 'Nama', 'Kelas', 'No Absen', 'Aktivitas'])
+    cw.writerow(['Timestamp', 'NIS', 'Nama', 'Kelas', 'No Absen', 'Aktivitas']) # Header Update
     
     for visit in visits:
         user = db_session.query(User).get(visit.user_id)
         cw.writerow([
             visit.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            user.nis if user else 'N/A', # Data Update
             user.name if user else 'Unknown',
             user.class_name if user else 'N/A',
             user.absent_number if user else 'N/A',

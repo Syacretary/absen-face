@@ -15,6 +15,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
+    nis = Column(String, nullable=False) # Nomor Induk Siswa
     name = Column(String, nullable=False)
     class_name = Column(String, nullable=False)
     absent_number = Column(String, nullable=False)
